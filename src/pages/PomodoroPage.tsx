@@ -181,7 +181,7 @@ const PomodoroPage: React.FC = () => {
       transition={{ duration: 0.5 }}
       className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-400 to-indigo-600 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300"
     >
-      <div className="w-full max-w-4xl p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
+      <div className="w-[30rem] p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
         <div className="max-w-md mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Pomodoro Timer</h2>

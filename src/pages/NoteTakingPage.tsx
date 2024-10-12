@@ -202,7 +202,7 @@ const NoteTakingPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full bg-gray-100 dark:bg-gray-900">
+    <div className="flex h-full bg-gray-100 dark:bg-gray-900 m-[4rem]">
       <div className="w-1/4 bg-white dark:bg-gray-800 p-4 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
         <div className="mb-4">
           <div className="relative">
