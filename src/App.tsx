@@ -122,7 +122,7 @@ function App() {
             className={`flex-grow flex flex-col ${showWelcome || showEntranceAnimation ? 'invisible' : 'visible'}`}
           >
             <Header userName={userName} />
-            <main className="flex-grow container mx-auto px-4 py-8 fade-in">
+            <main className="flex-grow container fade-in border-2 border-black min-w-full">
               <AnimatedRoutes />
             </main>
             <Footer />

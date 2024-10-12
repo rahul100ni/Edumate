@@ -157,7 +157,7 @@ const TodoListPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md transition-all duration-300">
+    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md transition-all duration-300 mt-[5rem]">
       <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">To-Do List</h2>
       <div className="mb-6">
         <div className="flex mb-2">
