@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --transition-duration: 500ms;
+}
+
+body {
+  @apply transition-colors duration-500 ease-in-out;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white;
+}
+
+/* Smooth transition for all elements */
+* {
+  transition: background-color var(--transition-duration) ease-in-out,
+              color var(--transition-duration) ease-in-out,
+              border-color var(--transition-duration) ease-in-out,
+              box-shadow var(--transition-duration) ease-in-out,
+              opacity var(--transition-duration) ease-in-out,
+              transform var(--transition-duration) ease-in-out;
+}
+
+/* Dark mode styles */
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .text-gray-800 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-600 {
+  @apply text-gray-400;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-700;
+}
+
+.dark .hover\:bg-gray-200:hover {
+  @apply hover:bg-gray-700;
+}
+
+/* Animate background gradient for dark mode */
+.dark .bg-gradient-animation {
+  background: linear-gradient(270deg, #1a202c, #2d3748);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Subtle hover effects for interactive elements */
+.hover-lift {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Fade-in animation for elements when switching modes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
