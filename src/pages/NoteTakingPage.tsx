@@ -24,6 +24,7 @@ const NoteTakingPage: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('')
   const [showTagInput, setShowTagInput] = useState(false)
   const [newTag, setNewTag] = useState('')
+  const [showSidebar, setShowSidebar] = useState(true)
   const contentEditableRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -202,111 +203,119 @@ const NoteTakingPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full bg-gray-100 dark:bg-gray-900 m-[4rem]">
-      <div className="w-1/4 bg-white dark:bg-gray-800 p-4 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
-        <div className="mb-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            <Search className="absolute right-3 top-2.5 text-gray-400" size={20} />
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            setCurrentNote({ id: 0, title: '', content: '', folder: '', tags: [], lastModified: new Date() })
-            if (contentEditableRef.current) {
-              contentEditableRef.current.innerHTML = ''
-            }
-          }}
-          className="w-full mb-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-300 flex items-center"
-        >
-          <Plus size={20} className="mr-2" /> New Note
-        </button>
-        <div className="mb-4">
-          <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">Folders</h3>
-          {folders.map(folder => (
-            <div
-              key={folder}
-              className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${activeFolder === folder ? 'bg-indigo-100 dark:bg-indigo-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              onClick={() => setActiveFolder(folder)}
-            >
-              <div className="flex items-center">
-                <Folder size={16} className="mr-2 text-indigo-500" />
-                <span className="text-gray-700 dark:text-gray-300">{folder}</span>
-              </div>
-              {activeFolder === folder && <ChevronRight size={16} className="text-indigo-500" />}
-            </div>
-          ))}
-          {showFolderInput ? (
-            <div className="flex items-center mt-2">
+    <div className="flex flex-col md:flex-row h-full bg-gray-100 dark:bg-gray-900 p-4 md:p-8">
+      <button
+        onClick={() => setShowSidebar(!showSidebar)}
+        className="md:hidden mb-4 p-2 bg-white dark:bg-gray-800 rounded-md shadow-md"
+      >
+        {showSidebar ? 'Hide Sidebar' : 'Show Sidebar'}
+      </button>
+      {(showSidebar || window.innerWidth >= 768) && (
+        <div className="w-full md:w-1/4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-4 md:mb-0 md:mr-4 overflow-y-auto max-h-screen">
+          <div className="mb-4">
+            <div className="relative">
               <input
                 type="text"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                className="flex-grow px-2 py-1 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="New folder name"
+                placeholder="Search notes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
-              <button
-                onClick={addFolder}
-                className="px-2 py-1 bg-indigo-500 text-white rounded-r-md hover:bg-indigo-600"
+              <Search className="absolute right-3 top-2.5 text-gray-400" size={20} />
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setCurrentNote({ id: 0, title: '', content: '', folder: '', tags: [], lastModified: new Date() })
+              if (contentEditableRef.current) {
+                contentEditableRef.current.innerHTML = ''
+              }
+            }}
+            className="w-full mb-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-300 flex items-center justify-center"
+          >
+            <Plus size={20} className="mr-2" /> New Note
+          </button>
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">Folders</h3>
+            {folders.map(folder => (
+              <div
+                key={folder}
+                className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${activeFolder === folder ? 'bg-indigo-100 dark:bg-indigo-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                onClick={() => setActiveFolder(folder)}
               >
-                Add
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowFolderInput(true)}
-              className="mt-2 text-indigo-500 hover:text-indigo-600 flex items-center"
-            >
-              <Plus size={16} className="mr-1" /> Add Folder
-            </button>
-          )}
-        </div>
-        <div className="space-y-2">
-          {filteredNotes.map(note => (
-            <div
-              key={note.id}
-              className={`p-2 bg-white dark:bg-gray-700 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-colors duration-300 ${
-                currentNote.id === note.id ? 'border-l-4 border-indigo-500' : ''
-              }`}
-              onClick={() => {
-                setCurrentNote(note)
-                if (contentEditableRef.current) {
-                  contentEditableRef.current.innerHTML = note.content
-                }
-              }}
-            >
-              <h3 className="font-semibold text-gray-800 dark:text-white truncate">{note.title || 'Untitled'}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{note.content.replace(/<[^>]*>/g, '')}</p>
-              <div className="flex items-center mt-1 space-x-2">
-                {note.tags.slice(0, 2).map(tag => (
-                  <span key={tag} className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-                {note.tags.length > 2 && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">+{note.tags.length - 2} more</span>
-                )}
+                <div className="flex items-center">
+                  <Folder size={16} className="mr-2 text-indigo-500" />
+                  <span className="text-gray-700 dark:text-gray-300">{folder}</span>
+                </div>
+                {activeFolder === folder && <ChevronRight size={16} className="text-indigo-500" />}
               </div>
-            </div>
-          ))}
+            ))}
+            {showFolderInput ? (
+              <div className="flex items-center mt-2">
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  className="flex-grow px-2 py-1 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="New folder name"
+                />
+                <button
+                  onClick={addFolder}
+                  className="px-2 py-1 bg-indigo-500 text-white rounded-r-md hover:bg-indigo-600"
+                >
+                  Add
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowFolderInput(true)}
+                className="mt-2 text-indigo-500 hover:text-indigo-600 flex items-center"
+              >
+                <Plus size={16} className="mr-1" /> Add Folder
+              </button>
+            )}
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {filteredNotes.map(note => (
+              <div
+                key={note.id}
+                className={`p-2 bg-white dark:bg-gray-700 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-colors duration-300 ${
+                  currentNote.id === note.id ? 'border-l-4 border-indigo-500' : ''
+                }`}
+                onClick={() => {
+                  setCurrentNote(note)
+                  if (contentEditableRef.current) {
+                    contentEditableRef.current.innerHTML = note.content
+                  }
+                }}
+              >
+                <h3 className="font-semibold text-gray-800 dark:text-white truncate">{note.title || 'Untitled'}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{note.content.replace(/<[^>]*>/g, '')}</p>
+                <div className="flex items-center mt-1 space-x-2 flex-wrap">
+                  {note.tags.slice(0, 2).map(tag => (
+                    <span key={tag} className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                  {note.tags.length > 2 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">+{note.tags.length - 2} more</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="w-3/4 p-4 bg-white dark:bg-gray-800">
-        <div className="mb-4 flex justify-between items-center">
+      )}
+      <div className="flex-grow bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md overflow-y-auto">
+        <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
           <input
             type="text"
             value={currentNote.title}
             onChange={(e) => setCurrentNote({ ...currentNote, title: e.target.value })}
             placeholder="Note Title"
-            className="text-2xl font-bold w-full px-4 py-2 border-b focus:outline-none focus:border-indigo-500 bg-transparent dark:text-white"
+            className="text-2xl font-bold w-full md:w-auto px-4 py-2 mb-2 md:mb-0 border-b focus:outline-none focus:border-indigo-500 bg-transparent dark:text-white"
           />
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full md:w-auto">
             <select
               value={currentNote.folder}
               onChange={(e) => setCurrentNote({ ...currentNote, folder: e.target.value })}
@@ -325,7 +334,7 @@ const NoteTakingPage: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="mb-2 flex space-x-2">
+        <div className="mb-2 flex space-x-2 flex-wrap">
           <button onClick={() => applyFormatting('bold')} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
             <Bold size={20} />
           </button>
@@ -342,16 +351,16 @@ const NoteTakingPage: React.FC = () => {
           className="w-full p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent dark:text-white min-h-[200px] overflow-y-auto"
           onInput={handleContentChange}
         />
-        <div className="flex items-center mt-2">
+        <div className="flex flex-wrap items-center mt-2">
           <button
             onClick={() => setShowTagInput(!showTagInput)}
-            className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-300 flex items-center"
+            className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-300 flex items-center mb-2 mr-2"
           >
             <Tag size={20} className="mr-2" /> Tags
           </button>
-          <div className="ml-4 flex space-x-2">
+          <div className="flex flex-wrap">
             {currentNote.tags.map(tag => (
-              <div key={tag} className="flex items-center bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full">
+              <div key={tag} className="flex items-center bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full mr-2 mb-2">
                 {tag}
                 <button onClick={() => removeTag(tag)} className="ml-2">
                   <X size={12} />
@@ -371,25 +380,25 @@ const NoteTakingPage: React.FC = () => {
             />
             <button
               onClick={addTag}
-              className="px-2 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
+              className="ml-2 px-2 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
             >
               Add
             </button>
           </div>
         )}
-        <div className="mt-4 flex justify-between">
+        <div className="mt-4 flex flex-wrap justify-between">
           {currentNote.id > 0 && (
             <button
               onClick={() => deleteNote(currentNote.id)}
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300 mb-2 md:mb-0"
             >
-              <Trash2 size={20} className="mr-2" /> Delete Note
+              <Trash2 size={20} className="mr-2 inline" /> Delete Note
             </button>
           )}
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap">
             <button
               onClick={() => exportNote('markdown')}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-300 flex items-center"
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-300 flex items-center mr-2 mb-2 md:mb-0"
             >
               <Download size={20} className="mr-2" /> Export as Markdown
             </button>
