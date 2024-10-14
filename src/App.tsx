@@ -69,10 +69,10 @@ function App() {
     }
 
     const storedUserName = localStorage.getItem('userName')
-    // if (storedUserName) {
-    //   setUserName(storedUserName)
-    //   setShowWelcome(false)
-    // }
+    if (storedUserName) {
+      setUserName(storedUserName)
+      setShowWelcome(false)
+    }
   }, [])
 
   const toggleDarkMode = () => {
