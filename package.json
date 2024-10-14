@@ -12,6 +12,7 @@
   "dependencies": {
     "@huggingface/inference": "^2.8.1",
     "@types/react-datepicker": "^4.11.2",
+    "edumate": "file:",
     "framer-motion": "^10.12.16",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.244.0",

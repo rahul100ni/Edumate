@@ -56,7 +56,7 @@ const PomodoroPage: React.FC = () => {
 
   const handleBackgroundMusic = () => {
     if (settings.backgroundMusic) {
-      backgroundMusicRef.current = new Audio('/path-to-background-music.mp3')
+      backgroundMusicRef.current = new Audio('/sounds/Study_Music.mp3');
       backgroundMusicRef.current.loop = true
       backgroundMusicRef.current.volume = settings.soundVolume
       if (isPlayingMusic) {
@@ -179,7 +179,7 @@ const PomodoroPage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-400 to-indigo-600 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300"
+      className="flex items-center justify-center overflow-hidden min-h-screen bg-gradient-to-br from-purple-400 to-indigo-600 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300"
     >
       <div className="w-[30rem] p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
         <div className="max-w-md mx-auto">

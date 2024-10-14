@@ -10,6 +10,7 @@ import NoteTakingPage from './pages/NoteTakingPage'
 import PdfSummarizerPage from './pages/PdfSummarizerPage'
 import VideoSummarizerPage from './pages/VideoSummarizerPage'
 import MindMapMakerPage from './pages/MindMapMakerPage'
+import DashboardPage from './pages/DashboardPage'
 import WelcomePage from './components/WelcomePage'
 import EntranceAnimation from './components/EntranceAnimation'
 import { Moon, Sun } from 'lucide-react'
@@ -26,7 +27,7 @@ const pageTransition = {
   duration: 0.5,
 }
 
-const AnimatedRoutes = () => {
+const AnimatedRoutes = ({ userName }: { userName: string | null }) => {
   const location = useLocation()
 
   return (
@@ -40,13 +41,14 @@ const AnimatedRoutes = () => {
         transition={pageTransition}
       >
         <Routes location={location}>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage userName={userName} />} />
           <Route path="/pomodoro" element={<PomodoroPage />} />
           <Route path="/todo-list" element={<TodoListPage />} />
           <Route path="/note-taking" element={<NoteTakingPage />} />
           <Route path="/pdf-summarizer" element={<PdfSummarizerPage />} />
           <Route path="/video-summarizer" element={<VideoSummarizerPage />} />
           <Route path="/mind-map-maker" element={<MindMapMakerPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -67,10 +69,10 @@ function App() {
     }
 
     const storedUserName = localStorage.getItem('userName')
-    if (storedUserName) {
-      setUserName(storedUserName)
-      setShowWelcome(false)
-    }
+    // if (storedUserName) {
+    //   setUserName(storedUserName)
+    //   setShowWelcome(false)
+    // }
   }, [])
 
   const toggleDarkMode = () => {
@@ -122,8 +124,8 @@ function App() {
             className={`flex-grow flex flex-col ${showWelcome || showEntranceAnimation ? 'invisible' : 'visible'}`}
           >
             <Header userName={userName} />
-            <main className="flex-grow container fade-in border-2 border-black min-w-full">
-              <AnimatedRoutes />
+            <main className="flex-grow container fade-in min-w-full">
+              <AnimatedRoutes userName={userName} />
             </main>
             <Footer />
           </motion.div>

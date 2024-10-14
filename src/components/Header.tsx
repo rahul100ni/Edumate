@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { BookOpen, Menu, X, User } from 'lucide-react'
 
 interface HeaderProps {
@@ -8,8 +8,13 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ userName }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const navigate = useNavigate()
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
+
+  const handleProfileClick = () => {
+    navigate('/dashboard')
+  }
 
   return (
     <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transition-all duration-500">
@@ -29,7 +34,10 @@ const Header: React.FC<HeaderProps> = ({ userName }) => {
           </nav>
           <div className="flex items-center space-x-4">
             {userName && (
-              <div className="flex items-center space-x-2">
+              <div 
+                className="flex items-center space-x-2 cursor-pointer hover:bg-indigo-700 rounded-full px-3 py-1 transition-colors duration-300"
+                onClick={handleProfileClick}
+              >
                 <User size={20} />
                 <span className="font-medium">{userName}</span>
               </div>
@@ -50,6 +58,7 @@ const Header: React.FC<HeaderProps> = ({ userName }) => {
             <MobileNavLink to="/pomodoro" onClick={toggleMenu}>Pomodoro</MobileNavLink>
             <MobileNavLink to="/todo-list" onClick={toggleMenu}>To-Do List</MobileNavLink>
             <MobileNavLink to="/note-taking" onClick={toggleMenu}>Notes</MobileNavLink>
+            <MobileNavLink to="/dashboard" onClick={toggleMenu}>Dashboard</MobileNavLink>
           </nav>
         </div>
       )}
