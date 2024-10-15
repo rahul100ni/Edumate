@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, RefreshCw, Settings, Music, Maximize2 } from 'lucide-react'
+import { Play, Pause, RefreshCw, Settings, Music, VolumeX, Volume1, Volume2 } from 'lucide-react'
 import { TimerSettings, defaultSettings } from './timerSettings'
 import { SettingsModal } from './SettingsModal'
 import { formatTime, handleNotification } from './utils'
@@ -24,6 +24,8 @@ const PomodoroPage: React.FC = () => {
   const [tempSettings, setTempSettings] = useState<TimerSettings>(settings)
   const [showQuote, setShowQuote] = useState(false)
   const [isPlayingMusic, setIsPlayingMusic] = useState(false)
+  const [volume, setVolume] = useState(0.5)
+  const [showVolumeControl, setShowVolumeControl] = useState(false)
 
   const timerRef = useRef<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -47,34 +49,40 @@ const PomodoroPage: React.FC = () => {
   }, [isActive, timeLeft])
 
   useEffect(() => {
-    handleBackgroundMusic()
-  }, [settings.backgroundMusic, settings.soundVolume])
+    return () => {
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.pause()
+        backgroundMusicRef.current.currentTime = 0
+      }
+    }
+  }, [])
 
   useEffect(() => {
     updateDocumentTitle()
   }, [timeLeft, settings.showTimeInTab])
 
   const handleBackgroundMusic = () => {
-    if (settings.backgroundMusic) {
-      backgroundMusicRef.current = new Audio('/sounds/Study_Music.mp3');
+    if (!backgroundMusicRef.current) {
+      backgroundMusicRef.current = new Audio('/sounds/Study_Music.mp3')
       backgroundMusicRef.current.loop = true
-      backgroundMusicRef.current.volume = settings.soundVolume
-      if (isPlayingMusic) {
-        backgroundMusicRef.current.play()
-      }
+    }
+    
+    backgroundMusicRef.current.volume = volume
+
+    if (isPlayingMusic) {
+      backgroundMusicRef.current.play().catch(error => console.error("Error playing music:", error))
     } else {
-      backgroundMusicRef.current?.pause()
+      backgroundMusicRef.current.pause()
     }
   }
 
   const toggleBackgroundMusic = () => {
-    setIsPlayingMusic(!isPlayingMusic)
-    if (isPlayingMusic) {
-      backgroundMusicRef.current?.pause()
-    } else {
-      backgroundMusicRef.current?.play()
-    }
+    setIsPlayingMusic(prev => !prev)
   }
+
+  useEffect(() => {
+    handleBackgroundMusic()
+  }, [isPlayingMusic, volume])
 
   const updateDocumentTitle = () => {
     document.title = settings.showTimeInTab
@@ -90,9 +98,13 @@ const PomodoroPage: React.FC = () => {
 
   const playNotificationSound = () => {
     if (settings.soundEnabled) {
-      audioRef.current = new Audio(`/path-to-${settings.selectedSound}.mp3`)
-      audioRef.current.volume = settings.soundVolume
-      audioRef.current.play()
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+      audioRef.current = new Audio(`/sounds/${settings.selectedSound}.mp3`)
+      audioRef.current.volume = volume
+      audioRef.current.play().catch(error => console.error("Error playing notification:", error))
     }
   }
 
@@ -123,14 +135,7 @@ const PomodoroPage: React.FC = () => {
   }
 
   const toggleTimer = () => {
-    setIsActive(!isActive)
-    if (isPlayingMusic) {
-      if (isActive) {
-        backgroundMusicRef.current?.play()
-      } else {
-        backgroundMusicRef.current?.pause()
-      }
-    }
+    setIsActive(prev => !prev)
   }
 
   const resetTimer = () => {
@@ -138,9 +143,6 @@ const PomodoroPage: React.FC = () => {
     setIsWork(true)
     setCycleCount(0)
     setTimeLeft(settings.workDuration)
-    if (isPlayingMusic) {
-      backgroundMusicRef.current?.pause()
-    }
   }
 
   const updateTempSetting = <K extends keyof TimerSettings>(key: K, value: TimerSettings[K]) => {
@@ -173,19 +175,59 @@ const PomodoroPage: React.FC = () => {
     setShowQuote(!showQuote)
   }
 
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="flex items-center justify-center overflow-hidden min-h-screen bg-gradient-to-br from-purple-400 to-indigo-600 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-400 to-indigo-600 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300 p-4"
     >
-      <div className="w-[30rem] p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
+      <div className="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300">
         <div className="max-w-md mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Pomodoro Timer</h2>
             <div className="flex space-x-3">
+              <motion.div
+                className="relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <button
+                  onClick={() => setShowVolumeControl(!showVolumeControl)}
+                  className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300"
+                >
+                  {volume === 0 ? (
+                    <VolumeX className="text-gray-600 dark:text-gray-400" />
+                  ) : volume < 0.5 ? (
+                    <Volume1 className="text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <Volume2 className="text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+                {showVolumeControl && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="absolute right-0 mt-2 p-2 bg-white dark:bg-gray-700 rounded-lg shadow-lg"
+                  >
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={volume}
+                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                      className="w-32"
+                    />
+                  </motion.div>
+                )}
+              </motion.div>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -200,7 +242,20 @@ const PomodoroPage: React.FC = () => {
                 onClick={toggleQuoteDisplay}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300"
               >
-                <Maximize2 className={showQuote ? "text-blue-500" : "text-gray-400"} />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className={`w-6 h-6 ${showQuote ? "text-blue-500" : "text-gray-400"}`}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
               </motion.button>
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -219,7 +274,30 @@ const PomodoroPage: React.FC = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="w-72 h-72 rounded-full border-8 border-indigo-200 dark:border-indigo-800 transition-colors duration-300"></div>
+                <svg className="w-72 h-72">
+                  <circle
+                    className="text-gray-200 dark:text-gray-700"
+                    strokeWidth="8"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r="130"
+                    cx="144"
+                    cy="144"
+                  />
+                  <motion.circle
+                    className="text-indigo-500 dark:text-indigo-400"
+                    strokeWidth="8"
+                    strokeDasharray={2 * Math.PI * 130}
+                    strokeDashoffset={2 * Math.PI * 130 * (1 - timeLeft / (isWork ? settings.workDuration : (cycleCount === settings.sessionsBeforeLongBreak - 1 ? settings.longBreakDuration : settings.shortBreakDuration)))}
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r="130"
+                    cx="144"
+                    cy="144"
+                    style={{ transition: 'stroke-dashoffset 1s linear' }}
+                  />
+                </svg>
               </motion.div>
               <div className="relative z-10 flex flex-col items-center justify-center w-72 h-72 mx-auto">
                 <motion.div
@@ -227,7 +305,7 @@ const PomodoroPage: React.FC = () => {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="text-8xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors duration-300"
+                  className="text-6xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors duration-300"
                 >
                   {formatTime(timeLeft)}
                 </motion.div>

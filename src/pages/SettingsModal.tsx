@@ -63,13 +63,25 @@ const DurationInput: React.FC<{ label: string; value: number; onChange: (value: 
     setInputValue(newValue);
     
     if (newValue === '') {
-      onChange(isMinutes ? 25 * 60 : 4);
+      onChange(getDefaultValue());
     } else {
       const numValue = parseInt(newValue, 10);
       if (!isNaN(numValue) && numValue > 0) {
         onChange(isMinutes ? numValue * 60 : numValue);
       }
     }
+  };
+
+  const getDefaultValue = () => {
+    if (isMinutes) {
+      switch (label) {
+        case "Work Duration": return 25 * 60;
+        case "Short Break Duration": return 5 * 60;
+        case "Long Break Duration": return 15 * 60;
+        default: return 25 * 60;
+      }
+    }
+    return 4;
   };
 
   const getPlaceholder = () => {
@@ -103,8 +115,6 @@ const SoundSettings: React.FC<{ tempSettings: TimerSettings; updateTempSetting: 
     <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Sound Settings</h4>
     <div className="space-y-2">
       <Checkbox label="Enable Sounds" checked={tempSettings.soundEnabled} onChange={(value) => updateTempSetting('soundEnabled', value)} />
-      <Checkbox label="Enable Background Music" checked={tempSettings.backgroundMusic} onChange={(value) => updateTempSetting('backgroundMusic', value)} />
-      <VolumeSlider value={tempSettings.soundVolume} onChange={(value) => updateTempSetting('soundVolume', value)} />
       <SoundSelector value={tempSettings.selectedSound} onChange={(value) => updateTempSetting('selectedSound', value)} />
     </div>
   </div>
