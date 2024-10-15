@@ -158,7 +158,13 @@ const PomodoroPage: React.FC = () => {
     }
     setSettings(newSettings)
     setShowSettings(false)
-    updateTimeLeftBasedOnCurrentState(newSettings)
+    if (isWork && newSettings.workDuration !== settings.workDuration) {
+      setTimeLeft(newSettings.workDuration)
+    } else if (!isWork && cycleCount === settings.sessionsBeforeLongBreak - 1 && newSettings.longBreakDuration !== settings.longBreakDuration) {
+      setTimeLeft(newSettings.longBreakDuration)
+    } else if (!isWork && newSettings.shortBreakDuration !== settings.shortBreakDuration) {
+      setTimeLeft(newSettings.shortBreakDuration)
+    }
   }
 
   const updateTimeLeftBasedOnCurrentState = (newSettings: TimerSettings) => {
