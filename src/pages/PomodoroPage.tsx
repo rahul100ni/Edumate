@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Play, Pause, RefreshCw, Settings, Music, VolumeX, Volume1, Volume2 } from 'lucide-react'
-import { TimerSettings, defaultSettings } from './timerSettings'
+import { useSettings } from '../context/SettingsContext'
+import { useStudyStats } from '../context/StudyStatsContext'
+import { TimerSettings } from './timerSettings'
 import { SettingsModal } from './SettingsModal'
 import { formatTime, handleNotification } from './utils'
+
+interface PomodoroSession {
+  date: string
+  duration: number
+  type: 'work' | 'break'
+  completed: boolean
+}
 
 const motivationalQuotes = [
   "Stay focused, you're doing great!",
@@ -14,7 +23,8 @@ const motivationalQuotes = [
 ]
 
 const PomodoroPage: React.FC = () => {
-  const [settings, setSettings] = useState<TimerSettings>(defaultSettings)
+  const { settings, requestNotificationPermission, updateSettings } = useSettings()
+  const { addSession } = useStudyStats()
   const [timeLeft, setTimeLeft] = useState(settings.workDuration)
   const [isActive, setIsActive] = useState(false)
   const [isWork, setIsWork] = useState(true)
@@ -22,10 +32,14 @@ const PomodoroPage: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false)
   const [quote, setQuote] = useState('')
   const [tempSettings, setTempSettings] = useState<TimerSettings>(settings)
-  const [showQuote, setShowQuote] = useState(false)
-  const [isPlayingMusic, setIsPlayingMusic] = useState(false)
-  const [volume, setVolume] = useState(0.5)
+  const [showQuote, setShowQuote] = useState(settings.showMotivationalQuotes)
+  const [isPlayingMusic, setIsPlayingMusic] = useState(settings.backgroundMusic)
+  const [volume, setVolume] = useState(settings.soundVolume)
   const [showVolumeControl, setShowVolumeControl] = useState(false)
+  const [currentSession, setCurrentSession] = useState<PomodoroSession | null>(null)
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
+  const [totalElapsedTime, setTotalElapsedTime] = useState(0)
+  const [lastDuration, setLastDuration] = useState(settings.workDuration)
 
   const timerRef = useRef<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -61,6 +75,66 @@ const PomodoroPage: React.FC = () => {
     updateDocumentTitle()
   }, [timeLeft, settings.showTimeInTab])
 
+  useEffect(() => {
+    if (backgroundMusicRef.current) {
+      backgroundMusicRef.current.volume = settings.backgroundMusicVolume
+    }
+  }, [settings.backgroundMusicVolume])
+
+  useEffect(() => {
+    // Request notification permission when component mounts
+    if (settings.desktopNotifications) {
+      requestNotificationPermission()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (currentSession && sessionStartTime) {
+      const interval = setInterval(() => {
+        const elapsed = Math.floor((settings.workDuration - timeLeft) / 60)
+        const totalTime = elapsed + totalElapsedTime
+        setCurrentSession(prev => prev ? { ...prev, duration: totalTime } : null)
+      }, 1000)
+
+      return () => clearInterval(interval)
+    }
+  }, [timeLeft, totalElapsedTime, sessionStartTime])
+
+  useEffect(() => {
+    const newDuration = isWork ? settings.workDuration : 
+      (cycleCount === settings.sessionsBeforeLongBreak - 1 ? 
+        settings.longBreakDuration : settings.shortBreakDuration)
+
+    if (isActive) {
+      // If timer is running, adjust timeLeft proportionally
+      const remainingPercentage = timeLeft / lastDuration
+      const newTimeLeft = Math.round(newDuration * remainingPercentage)
+      setTimeLeft(newTimeLeft)
+    } else {
+      // If timer is not running, simply update to new duration
+      setTimeLeft(newDuration)
+    }
+    
+    setLastDuration(newDuration)
+  }, [settings.workDuration, settings.shortBreakDuration, settings.longBreakDuration])
+
+  useEffect(() => {
+    // Check if stats were reset
+    const checkReset = () => {
+      const studySessions = localStorage.getItem('studySessions')
+      if (!studySessions) {
+        setTimeLeft(settings.workDuration)
+        setCycleCount(0)
+        setIsWork(true)
+        setIsActive(false)
+        setCurrentSession(null)
+      }
+    }
+
+    window.addEventListener('storage', checkReset)
+    return () => window.removeEventListener('storage', checkReset)
+  }, [settings.workDuration])
+
   const handleBackgroundMusic = () => {
     if (!backgroundMusicRef.current) {
       backgroundMusicRef.current = new Audio('/sounds/Study_Music.mp3')
@@ -90,9 +164,50 @@ const PomodoroPage: React.FC = () => {
       : 'Pomodoro Timer'
   }
 
+  const startNewSession = () => {
+    const session: PomodoroSession = {
+      date: new Date().toISOString().split('T')[0],
+      duration: 0,
+      type: isWork ? 'work' : 'break',
+      completed: false
+    }
+    setCurrentSession(session)
+    setSessionStartTime(Date.now())
+    setTotalElapsedTime(0)
+  }
+
+  const completeSession = (completed: boolean = true) => {
+    if (currentSession) {
+      const finalDuration = totalElapsedTime + Math.floor((settings.workDuration - timeLeft) / 60)
+      const finalSession = {
+        ...currentSession,
+        duration: finalDuration,
+        completed
+      }
+      
+      addSession({
+        date: finalSession.date,
+        duration: finalDuration,
+        type: finalSession.type,
+        completed: finalSession.completed
+      })
+      
+      setCurrentSession(null)
+      setSessionStartTime(null)
+      setTotalElapsedTime(0)
+    }
+  }
+
   const handleTimerComplete = () => {
-    playNotificationSound()
-    handleNotification(isWork)
+    if (currentSession) {
+      completeSession()
+    }
+    if (settings.soundEnabled) {
+      playNotificationSound()
+    }
+    if (settings.desktopNotifications) {
+      handleNotification(isWork)
+    }
     updateTimerState()
   }
 
@@ -103,7 +218,7 @@ const PomodoroPage: React.FC = () => {
         audioRef.current.currentTime = 0
       }
       audioRef.current = new Audio(`/sounds/${settings.selectedSound}.mp3`)
-      audioRef.current.volume = volume
+      audioRef.current.volume = settings.soundVolume
       audioRef.current.play().catch(error => console.error("Error playing notification:", error))
     }
   }
@@ -134,15 +249,36 @@ const PomodoroPage: React.FC = () => {
     setIsWork(true)
   }
 
-  const toggleTimer = () => {
-    setIsActive(prev => !prev)
+  const toggleTimer = async () => {
+    if (!isActive) {
+      if (settings.desktopNotifications) {
+        await requestNotificationPermission()
+      }
+      if (!currentSession || currentSession.completed) {
+        startNewSession()
+      }
+      setSessionStartTime(Date.now())
+    } else {
+      // When pausing, update total elapsed time
+      if (sessionStartTime) {
+        const additionalTime = Math.floor((settings.workDuration - timeLeft) / 60)
+        setTotalElapsedTime(prev => prev + additionalTime)
+      }
+    }
+    setIsActive(!isActive)
   }
 
   const resetTimer = () => {
+    if (currentSession && !currentSession.completed) {
+      completeSession(false)
+    }
     setIsActive(false)
     setIsWork(true)
     setCycleCount(0)
     setTimeLeft(settings.workDuration)
+    setCurrentSession(null)
+    setSessionStartTime(null)
+    setTotalElapsedTime(0)
   }
 
   const updateTempSetting = <K extends keyof TimerSettings>(key: K, value: TimerSettings[K]) => {

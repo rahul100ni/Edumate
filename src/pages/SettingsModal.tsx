@@ -1,25 +1,58 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import { TimerSettings } from './timerSettings'
+import { useSettings } from '../context/SettingsContext'
 
 interface SettingsModalProps {
-  tempSettings: TimerSettings;
-  updateTempSetting: <K extends keyof TimerSettings>(key: K, value: TimerSettings[K]) => void;
-  saveSettings: () => void;
-  closeSettings: () => void;
+  closeSettings: () => void
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({
-  tempSettings,
-  updateTempSetting,
-  saveSettings,
-  closeSettings,
-}) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ closeSettings }) => {
+  const { settings, updateSettings } = useSettings()
+  const [tempSettings, setTempSettings] = useState({
+    workDuration: '',
+    shortBreakDuration: '',
+    longBreakDuration: '',
+    sessionsBeforeLongBreak: ''
+  })
+
+  useEffect(() => {
+    // Initialize temp settings with current values
+    setTempSettings({
+      workDuration: Math.floor(settings.workDuration / 60).toString(),
+      shortBreakDuration: Math.floor(settings.shortBreakDuration / 60).toString(),
+      longBreakDuration: Math.floor(settings.longBreakDuration / 60).toString(),
+      sessionsBeforeLongBreak: settings.sessionsBeforeLongBreak.toString()
+    })
+  }, [settings])
+
+  const handleSave = () => {
+    // Apply default values if fields are empty
+    const workDuration = tempSettings.workDuration === '' ? 25 : parseInt(tempSettings.workDuration)
+    const shortBreak = tempSettings.shortBreakDuration === '' ? 5 : parseInt(tempSettings.shortBreakDuration)
+    const longBreak = tempSettings.longBreakDuration === '' ? 15 : parseInt(tempSettings.longBreakDuration)
+    const sessions = tempSettings.sessionsBeforeLongBreak === '' ? 4 : parseInt(tempSettings.sessionsBeforeLongBreak)
+
+    updateSettings({
+      workDuration: workDuration * 60,
+      shortBreakDuration: shortBreak * 60,
+      longBreakDuration: longBreak * 60,
+      sessionsBeforeLongBreak: sessions
+    })
+    closeSettings()
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    // Allow empty values and only positive numbers
+    if (value === '' || (/^\d+$/.test(value) && parseInt(value) > 0)) {
+      setTempSettings(prev => ({ ...prev, [field]: value }))
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-semibold text-gray-800 dark:text-white">Settings</h3>
+          <h3 className="text-2xl font-semibold text-gray-800 dark:text-white">Timer Settings</h3>
           <button
             onClick={closeSettings}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -27,12 +60,195 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <X size={24} />
           </button>
         </div>
+
         <div className="space-y-6">
-          <TimerDurationSettings tempSettings={tempSettings} updateTempSetting={updateTempSetting} />
-          <SoundSettings tempSettings={tempSettings} updateTempSetting={updateTempSetting} />
-          <BehaviorSettings tempSettings={tempSettings} updateTempSetting={updateTempSetting} />
+          {/* Timer Durations */}
+          <div>
+            <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Timer Durations</h4>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Work Duration (minutes)
+                </label>
+                <input
+                  type="text"
+                  value={tempSettings.workDuration}
+                  onChange={(e) => handleInputChange('workDuration', e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+                  placeholder="25"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Short Break (minutes)
+                </label>
+                <input
+                  type="text"
+                  value={tempSettings.shortBreakDuration}
+                  onChange={(e) => handleInputChange('shortBreakDuration', e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+                  placeholder="5"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Long Break (minutes)
+                </label>
+                <input
+                  type="text"
+                  value={tempSettings.longBreakDuration}
+                  onChange={(e) => handleInputChange('longBreakDuration', e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+                  placeholder="15"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Sessions Before Long Break
+                </label>
+                <input
+                  type="text"
+                  value={tempSettings.sessionsBeforeLongBreak}
+                  onChange={(e) => handleInputChange('sessionsBeforeLongBreak', e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md"
+                  placeholder="4"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sound Settings */}
+          <div>
+            <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Sound Settings</h4>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Enable Sounds</span>
+                <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                  <input
+                    type="checkbox"
+                    id="soundEnabled"
+                    checked={settings.soundEnabled}
+                    onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
+                    className="absolute w-0 h-0 opacity-0"
+                  />
+                  <label
+                    htmlFor="soundEnabled"
+                    className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${
+                      settings.soundEnabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out ${
+                        settings.soundEnabled ? 'translate-x-6' : 'translate-x-0'
+                      }`}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Notification Sound
+                </label>
+                <select
+                  value={settings.selectedSound}
+                  onChange={(e) => updateSettings({ selectedSound: e.target.value as 'bell' | 'chime' | 'gong' })}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="bell">Bell</option>
+                  <option value="chime">Chime</option>
+                  <option value="gong">Gong</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Behavior Settings */}
+          <div>
+            <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Behavior Settings</h4>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Auto-start Breaks</span>
+                <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                  <input
+                    type="checkbox"
+                    id="autoStartBreaks"
+                    checked={settings.autoStartBreaks}
+                    onChange={(e) => updateSettings({ autoStartBreaks: e.target.checked })}
+                    className="absolute w-0 h-0 opacity-0"
+                  />
+                  <label
+                    htmlFor="autoStartBreaks"
+                    className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${
+                      settings.autoStartBreaks ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out ${
+                        settings.autoStartBreaks ? 'translate-x-6' : 'translate-x-0'
+                      }`}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Auto-start Work Sessions</span>
+                <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                  <input
+                    type="checkbox"
+                    id="autoStartPomodoros"
+                    checked={settings.autoStartPomodoros}
+                    onChange={(e) => updateSettings({ autoStartPomodoros: e.target.checked })}
+                    className="absolute w-0 h-0 opacity-0"
+                  />
+                  <label
+                    htmlFor="autoStartPomodoros"
+                    className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${
+                      settings.autoStartPomodoros ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out ${
+                        settings.autoStartPomodoros ? 'translate-x-6' : 'translate-x-0'
+                      }`}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 dark:text-gray-300">Show Time in Browser Tab</span>
+                <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                  <input
+                    type="checkbox"
+                    id="showTimeInTab"
+                    checked={settings.showTimeInTab}
+                    onChange={(e) => updateSettings({ showTimeInTab: e.target.checked })}
+                    className="absolute w-0 h-0 opacity-0"
+                  />
+                  <label
+                    htmlFor="showTimeInTab"
+                    className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${
+                      settings.showTimeInTab ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out ${
+                        settings.showTimeInTab ? 'translate-x-6' : 'translate-x-0'
+                      }`}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button
-            onClick={saveSettings}
+            onClick={handleSave}
             className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-colors duration-300"
           >
             Save Settings
@@ -43,133 +259,4 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   )
 }
 
-const TimerDurationSettings: React.FC<{ tempSettings: TimerSettings; updateTempSetting: SettingsModalProps['updateTempSetting'] }> = ({ tempSettings, updateTempSetting }) => (
-  <div>
-    <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Timer Durations</h4>
-    <div className="space-y-2">
-      <DurationInput label="Work Duration" value={tempSettings.workDuration} onChange={(value) => updateTempSetting('workDuration', value)} />
-      <DurationInput label="Short Break Duration" value={tempSettings.shortBreakDuration} onChange={(value) => updateTempSetting('shortBreakDuration', value)} />
-      <DurationInput label="Long Break Duration" value={tempSettings.longBreakDuration} onChange={(value) => updateTempSetting('longBreakDuration', value)} />
-      <DurationInput label="Sessions Before Long Break" value={tempSettings.sessionsBeforeLongBreak} onChange={(value) => updateTempSetting('sessionsBeforeLongBreak', value)} isMinutes={false} />
-    </div>
-  </div>
-)
-
-const DurationInput: React.FC<{ label: string; value: number; onChange: (value: number) => void; isMinutes?: boolean }> = ({ label, value, onChange, isMinutes = true }) => {
-  const [inputValue, setInputValue] = React.useState(isMinutes ? Math.floor(value / 60).toString() : value.toString());
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    
-    if (newValue === '') {
-      onChange(getDefaultValue());
-    } else {
-      const numValue = parseInt(newValue, 10);
-      if (!isNaN(numValue) && numValue > 0) {
-        onChange(isMinutes ? numValue * 60 : numValue);
-      }
-    }
-  };
-
-  const getDefaultValue = () => {
-    if (isMinutes) {
-      switch (label) {
-        case "Work Duration": return 25 * 60;
-        case "Short Break Duration": return 5 * 60;
-        case "Long Break Duration": return 15 * 60;
-        default: return 25 * 60;
-      }
-    }
-    return 4;
-  };
-
-  const getPlaceholder = () => {
-    if (isMinutes) {
-      switch (label) {
-        case "Work Duration": return "25";
-        case "Short Break Duration": return "5";
-        case "Long Break Duration": return "15";
-        default: return "25";
-      }
-    }
-    return "4";
-  };
-
-  return (
-    <label className="block">
-      <span className="text-gray-700 dark:text-gray-300">{label} {isMinutes ? "(minutes)" : ""}</span>
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        placeholder={getPlaceholder()}
-        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-      />
-    </label>
-  )
-}
-
-const SoundSettings: React.FC<{ tempSettings: TimerSettings; updateTempSetting: SettingsModalProps['updateTempSetting'] }> = ({ tempSettings, updateTempSetting }) => (
-  <div>
-    <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Sound Settings</h4>
-    <div className="space-y-2">
-      <Checkbox label="Enable Sounds" checked={tempSettings.soundEnabled} onChange={(value) => updateTempSetting('soundEnabled', value)} />
-      <SoundSelector value={tempSettings.selectedSound} onChange={(value) => updateTempSetting('selectedSound', value)} />
-    </div>
-  </div>
-)
-
-const BehaviorSettings: React.FC<{ tempSettings: TimerSettings; updateTempSetting: SettingsModalProps['updateTempSetting'] }> = ({ tempSettings, updateTempSetting }) => (
-  <div>
-    <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Behavior Settings</h4>
-    <div className="space-y-2">
-      <Checkbox label="Auto-start Breaks" checked={tempSettings.autoStartBreaks} onChange={(value) => updateTempSetting('autoStartBreaks', value)} />
-      <Checkbox label="Auto-start Pomodoros" checked={tempSettings.autoStartPomodoros} onChange={(value) => updateTempSetting('autoStartPomodoros', value)} />
-      <Checkbox label="Show Time in Browser Tab" checked={tempSettings.showTimeInTab} onChange={(value) => updateTempSetting('showTimeInTab', value)} />
-      <Checkbox label="Enable Desktop Notifications" checked={tempSettings.desktopNotifications} onChange={(value) => updateTempSetting('desktopNotifications', value)} />
-    </div>
-  </div>
-)
-
-const Checkbox: React.FC<{ label: string; checked: boolean; onChange: (value: boolean) => void }> = ({ label, checked, onChange }) => (
-  <label className="flex items-center">
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-    />
-    <span className="ml-2 text-gray-700 dark:text-gray-300">{label}</span>
-  </label>
-)
-
-const VolumeSlider: React.FC<{ value: number; onChange: (value: number) => void }> = ({ value, onChange }) => (
-  <label className="block">
-    <span className="text-gray-700 dark:text-gray-300">Volume</span>
-    <input
-      type="range"
-      min="0"
-      max="1"
-      step="0.1"
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="mt-1 block w-full"
-    />
-  </label>
-)
-
-const SoundSelector: React.FC<{ value: string; onChange: (value: string) => void }> = ({ value, onChange }) => (
-  <label className="block">
-    <span className="text-gray-700 dark:text-gray-300">Notification Sound</span>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-    >
-      <option value="bell">Bell</option>
-      <option value="chime">Chime</option>
-      <option value="gong">Gong</option>
-    </select>
-  </label>
-)
+export default SettingsModal

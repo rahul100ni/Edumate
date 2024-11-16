@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { SettingsProvider, useSettings } from './context/SettingsContext'
+import { TaskAnalyticsProvider } from './context/TaskAnalyticsContext'
+import { StudyStatsProvider } from './context/StudyStatsContext'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
@@ -16,15 +19,15 @@ import EntranceAnimation from './components/EntranceAnimation'
 import { Moon, Sun } from 'lucide-react'
 
 const pageVariants = {
-  initial: { opacity: 0, y: 20 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -20 },
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 }
 }
 
 const pageTransition = {
-  type: 'tween',
-  ease: 'anticipate',
-  duration: 0.5,
+  type: "tween",
+  ease: "easeInOut",
+  duration: 0.3
 }
 
 const AnimatedRoutes = ({ userName }: { userName: string | null }) => {
@@ -35,10 +38,11 @@ const AnimatedRoutes = ({ userName }: { userName: string | null }) => {
       <motion.div
         key={location.pathname}
         initial="initial"
-        animate="in"
-        exit="out"
+        animate="animate"
+        exit="exit"
         variants={pageVariants}
         transition={pageTransition}
+        className="w-full"
       >
         <Routes location={location}>
           <Route path="/" element={<HomePage userName={userName} />} />
@@ -55,19 +59,13 @@ const AnimatedRoutes = ({ userName }: { userName: string | null }) => {
   )
 }
 
-function App() {
-  const [darkMode, setDarkMode] = useState(false)
-  const [userName, setUserName] = useState<string | null>(null)
-  const [showWelcome, setShowWelcome] = useState(true)
+const AppContent: React.FC = () => {
+  const { settings, updateSettings } = useSettings()
+  const [userName, setUserName] = useState<string | null>(() => localStorage.getItem('userName'))
+  const [showWelcome, setShowWelcome] = useState(!userName)
   const [showEntranceAnimation, setShowEntranceAnimation] = useState(false)
 
   useEffect(() => {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true'
-    setDarkMode(isDarkMode)
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark')
-    }
-
     const storedUserName = localStorage.getItem('userName')
     if (storedUserName) {
       setUserName(storedUserName)
@@ -76,11 +74,8 @@ function App() {
   }, [])
 
   const toggleDarkMode = () => {
-    const newDarkMode = !darkMode
-    setDarkMode(newDarkMode)
-    localStorage.setItem('darkMode', newDarkMode.toString())
-    
-    if (newDarkMode) {
+    updateSettings({ darkMode: !settings.darkMode })
+    if (!settings.darkMode) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
@@ -100,7 +95,7 @@ function App() {
 
   return (
     <Router>
-      <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+      <div className={`min-h-screen ${settings.darkMode ? 'dark' : ''}`}>
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 dark:bg-gradient-animation min-h-screen flex flex-col transition-all duration-500">
           <AnimatePresence>
             {showWelcome && (
@@ -135,11 +130,23 @@ function App() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            {darkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-gray-800" />}
+            {settings.darkMode ? <Sun className="text-yellow-400" /> : <Moon className="text-gray-800" />}
           </motion.button>
         </div>
       </div>
     </Router>
+  )
+}
+
+function App() {
+  return (
+    <SettingsProvider>
+      <TaskAnalyticsProvider>
+        <StudyStatsProvider>
+          <AppContent />
+        </StudyStatsProvider>
+      </TaskAnalyticsProvider>
+    </SettingsProvider>
   )
 }
 
