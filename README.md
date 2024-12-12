@@ -99,7 +99,6 @@ npm run dev
 
 - **Intuitive Interface**: Clean and modern design for distraction-free studying
 - **Cross-Platform**: Works seamlessly across desktop and mobile devices
-- **Offline Support**: Continue working without internet connection
 - **Data Privacy**: Your data stays local and secure
 - **Customizable**: Adapt the tools to your study style
 - **Dark Mode**: Easy on the eyes during late-night study sessions
@@ -133,5 +132,5 @@ Project Repository: [https://github.com/rahul100ni/Edumate](https://github.com/r
 ---
 
 <div align="center">
-  Made with ❤️ by the EduMate Team
+  Made with ❤️ by Rahul.
 </div>
