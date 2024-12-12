@@ -4,6 +4,8 @@
 
 ![EduMate Banner](./assets/edumate-banner.png)
 
+_Revolutionize your productivity. EduMate empowers every learner!_
+
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-Styled-38B2AC.svg)](https://tailwindcss.com/)
@@ -11,49 +13,59 @@
 
 </div>
 
+## 📖 Table of Contents
+- [Overview](#🌟-overview)
+- [Key Highlights](#🌈-key-highlights)
+- [Getting Started](#⚙️-getting-started)
+- [Tech Stack](#🔧-tech-stack)
+- [Screenshots](#📱-screenshots)
+- [Why EduMate?](#🔍-why-edumate)
+- [Contributing](#📦-contributing)
+- [Acknowledgments](#🙏-acknowledgments)
+- [License](#🔒-license)
+
 ## 🌟 Overview
 
-EduMate is a comprehensive study companion designed to enhance your learning experience and boost productivity. With its suite of powerful tools and intuitive interface, EduMate helps students and professionals manage their study sessions effectively. Try it out at [https://edumate-five.vercel.app/](https://edumate-five.vercel.app/)!
+EduMate is a comprehensive study companion designed to enhance your learning experience and boost productivity. With its suite of powerful tools and intuitive interface, EduMate helps students and professionals manage their study sessions effectively. Try it out at [https://edumate-five.vercel.app/](https://edumate-five.vercel.app)!
 
 > **Note**: AI-powered features (PDF Summarizer, Video Summarizer) are currently under development and not yet functional. We're working hard to bring these exciting features to you soon!
 
-## ✨ Features
+## 🌈 Key Highlights
 
 ### 🕒 Pomodoro Timer
-- Customizable work and break intervals
-- Session tracking and statistics
-- Background music and sound notifications
-- Quick time adjustments
-- Dark mode support
+🎯 Flexible work-break cycles  
+🔔 Background music and notifications  
+📊 Session analytics  
+🎮 Intuitive controls
 
 ### ✅ Smart Todo List
-- Priority-based task management
-- Due dates and reminders
-- Subtasks and categories
-- Progress tracking
-- Tag system for organization
+📌 Priority-based task management  
+⏰ Due dates and reminders  
+📂 Subtasks and categories  
+📈 Progress tracking  
+🏷️ Tag system for organization
 
 ### 📝 Note Taking
-- Rich text editor
-- File organization system
-- Tags and categories
-- Export to PDF/Markdown
-- Auto-save functionality
+🖋️ Rich text editor  
+📂 File organization system  
+🏷️ Tags and categories  
+📄 Export to PDF/Markdown  
+💾 Auto-save functionality
 
 ### 📊 Analytics Dashboard
-- Study session statistics
-- Productivity trends
-- Task completion rates
-- Visual progress tracking
-- Streak monitoring
+📉 Study session statistics  
+📈 Productivity trends  
+✅ Task completion rates  
+🎯 Visual progress tracking  
+🔥 Streak monitoring
 
 ### 🎯 Additional Tools
-- PDF Summarizer (Coming Soon)
-- Video Summarizer (Coming Soon)
-- Mind Map Maker
-- And more coming soon!
+📜 PDF Summarizer (Coming Soon)  
+🎥 Video Summarizer (Coming Soon)  
+🧠 Mind Map Maker  
+✨ And more coming soon!
 
-## 🚀 Getting Started
+## ⚙️ Getting Started
 
 ### Prerequisites
 - Node.js (v14 or higher)
@@ -79,7 +91,7 @@ npm run dev
 
 4. Open [http://localhost:5173](http://localhost:5173) in your browser
 
-## 🛠️ Built With
+## 🔧 Tech Stack
 
 - [React](https://reactjs.org/) - UI Framework
 - [TypeScript](https://www.typescriptlang.org/) - Programming Language
@@ -91,11 +103,19 @@ npm run dev
 ## 📱 Screenshots
 
 <div align="center">
-  <img src="./assets/pomodoro-timer.png" alt="Pomodoro Timer" width="400"/>
-  <img src="./assets/dashboard.png" alt="Dashboard" width="400"/>
+  <table>
+    <tr>
+      <td><img src="./assets/pomodoro-timer.png" alt="Pomodoro Timer" width="510"/></td>
+      <td><img src="./assets/dashboard.png" alt="Dashboard" width="500"/></td>
+    </tr>
+    <tr>
+      <td align="center">Pomodoro Timer</td>
+      <td align="center">Dashboard</td>
+    </tr>
+  </table>
 </div>
 
-## 🎯 Core Features
+## 🔍 Why EduMate?
 
 - **Intuitive Interface**: Clean and modern design for distraction-free studying
 - **Cross-Platform**: Works seamlessly across desktop and mobile devices
@@ -103,7 +123,7 @@ npm run dev
 - **Customizable**: Adapt the tools to your study style
 - **Dark Mode**: Easy on the eyes during late-night study sessions
 
-## 🤝 Contributing
+## 📦 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
@@ -113,20 +133,19 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 🙏 Acknowledgments
-
-- [React Documentation](https://reactjs.org/docs)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Framer Motion](https://www.framer.com/docs/)
-- All our amazing contributors
-
 ## 📬 Contact
 
-Live Demo: [https://edumate-five.vercel.app/](https://edumate-five.vercel.app/)
+<div>
+  <a href="https://edumate-five.vercel.app/" style="padding: 10px; font-size: 18px; text-decoration: none; background: #38B2AC; color: white; border-radius: 5px;">
+    Try Live Demo
+  </a>
+</div>
+
 Project Repository: [https://github.com/rahul100ni/Edumate](https://github.com/rahul100ni/Edumate)
 
 ---
 
 <div align="center">
-  Made with ❤️ by Rahul.
+  <h3><i>EduMate</i>: Revolutionizing Learning, One Click at a Time</h3>
+  <h3>Made with ❤️ by Rahul.</h3>
 </div>
