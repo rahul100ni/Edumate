@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![EduMate Banner](./assets/images/edumate-banner.png)
+![EduMate Banner](./assets/edumate-banner.png)
 
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
