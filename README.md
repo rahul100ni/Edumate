@@ -27,7 +27,7 @@ _Revolutionize your productivity. EduMate empowers every learner!_
 ## 🌟 Overview
 
 EduMate is a comprehensive study companion designed to enhance your learning experience and boost productivity. With its suite of powerful tools and intuitive interface, EduMate helps students and professionals manage their study sessions effectively. 
-Try it out at [https://edumate-five.vercel.app](https://edumate-five.vercel.app)!
+<p>Try it out at [https://edumate-five.vercel.app](https://edumate-five.vercel.app)!</p>
 
 > **Note**: AI-powered features (PDF Summarizer, Video Summarizer) are currently under development and not yet functional. We're working hard to bring these exciting features to you soon!
 
