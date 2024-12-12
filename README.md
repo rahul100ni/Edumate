@@ -91,8 +91,8 @@ npm run dev
 ## 📱 Screenshots
 
 <div align="center">
-  <img src="https://images.unsplash.com/photo-1610484826967-09c5720778c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Pomodoro Timer" width="400"/>
-  <img src="https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Dashboard" width="400"/>
+  <img src="./assets/pomodoro-timer.png" alt="Pomodoro Timer" width="400"/>
+  <img src="./assets/dashboard.png" alt="Dashboard" width="400"/>
 </div>
 
 ## 🎯 Core Features
