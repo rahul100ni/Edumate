@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { Plus, Trash2, Edit2, Save, X, Calendar, Clock, Tag, ChevronDown, ChevronUp, Play } from 'lucide-react'
+import { useTaskAnalytics } from '../context/TaskAnalyticsContext'
 
 interface SubTask {
   id: number
@@ -22,6 +23,7 @@ interface Todo {
 }
 
 const TodoListPage: React.FC = () => {
+  const { updateTaskCompletion } = useTaskAnalytics()
   const [todos, setTodos] = useState<Todo[]>(() => {
     const savedTodos = localStorage.getItem('todos')
     return savedTodos ? JSON.parse(savedTodos, (key, value) => {
@@ -62,9 +64,12 @@ const TodoListPage: React.FC = () => {
   }
 
   const toggleTodo = (id: number) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ))
+    const todo = todos.find(t => t.id === id)
+    if (todo) {
+      const updatedTodo = { ...todo, completed: !todo.completed }
+      setTodos(todos.map(t => t.id === id ? updatedTodo : t))
+      updateTaskCompletion(updatedTodo)
+    }
   }
 
   const deleteTodo = (id: number) => {
