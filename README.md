@@ -128,7 +128,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📬 Contact
 
 Live Demo: [https://edumate-five.vercel.app/](https://edumate-five.vercel.app/)
-Project Repository: [https://github.com/yourusername/edumate](https://github.com/yourusername/edumate)
+Project Repository: [https://github.com/rahul100ni/Edumate](https://github.com/rahul100ni/Edumate)
 
 ---
 
