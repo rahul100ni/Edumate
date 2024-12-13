@@ -9,7 +9,6 @@ _Revolutionize your productivity. EduMate empowers every learner!_
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-Styled-38B2AC.svg)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
@@ -22,7 +21,6 @@ _Revolutionize your productivity. EduMate empowers every learner!_
 - [Why EduMate?](#🔍-why-edumate)
 - [Contributing](#📦-contributing)
 - [Acknowledgments](#🙏-acknowledgments)
-- [License](#🔒-license)
 
 ## 🌟 Overview
 
