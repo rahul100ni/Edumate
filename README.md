@@ -74,7 +74,7 @@ Try it out at [https://edumate-five.vercel.app](https://edumate-five.vercel.app)
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/edumate.git
+git clone https://github.com/rahul100ni/edumate.git
 ```
 
 2. Install dependencies
