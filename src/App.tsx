@@ -10,9 +10,9 @@ import HomePage from './pages/HomePage'
 import PomodoroPage from './pages/PomodoroPage'
 import TodoListPage from './pages/TodoListPage'
 import NoteTakingPage from './pages/NoteTakingPage'
+import QuizGeneratorPage from './pages/QuizGeneratorPage'
+import ChatWithPDFPage from './pages/ChatWithPDFPage'
 import PdfSummarizerPage from './pages/PdfSummarizerPage'
-import VideoSummarizerPage from './pages/VideoSummarizerPage'
-import MindMapMakerPage from './pages/MindMapMakerPage'
 import DashboardPage from './pages/DashboardPage'
 import WelcomePage from './components/WelcomePage'
 import EntranceAnimation from './components/EntranceAnimation'
@@ -50,8 +50,8 @@ const AnimatedRoutes = ({ userName }: { userName: string | null }) => {
           <Route path="/todo-list" element={<TodoListPage />} />
           <Route path="/note-taking" element={<NoteTakingPage />} />
           <Route path="/pdf-summarizer" element={<PdfSummarizerPage />} />
-          <Route path="/video-summarizer" element={<VideoSummarizerPage />} />
-          <Route path="/mind-map-maker" element={<MindMapMakerPage />} />
+          <Route path="/chat-with-pdf" element={<ChatWithPDFPage />} />
+          <Route path="/quiz-generator" element={<QuizGeneratorPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </motion.div>

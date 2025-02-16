@@ -1,12 +1,12 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, CheckSquare, FileText, FileSearch, Video, GitBranch, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Clock, CheckSquare, FileText, FileSearch, MessageSquare, HelpCircle, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import EntranceAnimation from '../components/EntranceAnimation'
 
 const trendingFeatures = [
   { title: 'PDF Summarizer', description: 'Get quick summaries of PDF documents', icon: <FileSearch size={48} />, link: '/pdf-summarizer', image: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' },
-  { title: 'Video Summarizer', description: 'Extract key points from educational videos', icon: <Video size={48} />, link: '/video-summarizer', image: 'https://images.unsplash.com/photo-1610484826967-09c5720778c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' },
+  { title: 'Chat with PDF', description: 'Interactive conversations with your documents', icon: <MessageSquare size={48} />, link: '/chat-with-pdf', image: 'https://images.unsplash.com/photo-1610484826967-09c5720778c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' },
   { title: 'Pomodoro Timer', description: 'Boost productivity with timed work sessions', icon: <Clock size={48} />, link: '/pomodoro', image: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80' },
 ]
 
@@ -15,8 +15,8 @@ const allTools = [
   { title: 'To-Do List', description: 'Organize and prioritize your tasks', icon: <CheckSquare size={32} />, link: '/todo-list' },
   { title: 'Note Taking', description: 'Capture and organize your thoughts', icon: <FileText size={32} />, link: '/note-taking' },
   { title: 'PDF Summarizer', description: 'Get quick summaries of PDF documents', icon: <FileSearch size={32} />, link: '/pdf-summarizer' },
-  { title: 'Video Summarizer', description: 'Extract key points from educational videos', icon: <Video size={32} />, link: '/video-summarizer' },
-  { title: 'Mind Map Maker', description: 'Visualize concepts and ideas', icon: <GitBranch size={32} />, link: '/mind-map-maker' },
+  { title: 'Chat with PDF', description: 'Interactive conversations with your documents', icon: <MessageSquare size={32} />, link: '/chat-with-pdf' },
+  { title: 'Quiz Generator', description: 'Create quizzes from any content', icon: <HelpCircle size={32} />, link: '/quiz-generator' },
 ]
 
 const ToolCard = lazy(() => import('./ToolCard'))
