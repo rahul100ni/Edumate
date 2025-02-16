@@ -1,243 +1,436 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, FileText, Copy, X, AlertCircle } from 'lucide-react'
-import * as pdfjsLib from 'pdfjs-dist'
-import { HfInference } from '@huggingface/inference'
+import { FileText, AlertCircle, Info, Settings2, Sparkles, FileSearch, BookOpen, List, AlignLeft, Wand2, X } from 'lucide-react'
+import PDFProcessor from '../components/PDFProcessor'
+import Summarizer from '../components/Summarizer'
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-
-const hf = new HfInference('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')
+interface SummarySettings {
+  length: 'short' | 'medium' | 'detailed'
+  tone: 'academic' | 'simple' | 'creative'
+  format: 'bullets' | 'paragraphs'
+  highlightKeyPoints: boolean
+  preserveStructure: boolean
+  extractDefinitions: boolean
+}
 
 const PdfSummarizerPage: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null)
-  const [summary, setSummary] = useState('')
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [statusMessage, setStatusMessage] = useState('')
-  const [error, setError] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [summarySettings, setSummarySettings] = useState<SummarySettings>({
+    length: 'medium',
+    tone: 'simple',
+    format: 'paragraphs',
+    highlightKeyPoints: true,
+    preserveStructure: true,
+    extractDefinitions: true
+  })
+  const [showSettings, setShowSettings] = useState(false)
+  const [pdfContent, setPdfContent] = useState<string>('')
+  const [viewMode, setViewMode] = useState<'split' | 'single'>('single')
+  const [lastGeneratedSummary, setLastGeneratedSummary] = useState<string | null>(null)
+  const [metadata, setMetadata] = useState<{
+    title?: string
+    author?: string
+    pages?: number
+    keywords?: string[]
+  } | null>(null)
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const selectedFile = event.target.files[0]
-      if (selectedFile.type === 'application/pdf') {
-        setFile(selectedFile)
-        setError('')
-      } else {
-        setError('Please upload a PDF file.')
-        setFile(null)
-      }
-    }
+  const handleError = (error: string) => {
+    setError(error)
   }
 
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      const droppedFile = event.dataTransfer.files[0]
-      if (droppedFile.type === 'application/pdf') {
-        setFile(droppedFile)
-        setError('')
-      } else {
-        setError('Please upload a PDF file.')
-      }
-    }
-  }, [])
-
-  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-  }, [])
-
-  const extractTextFromPdf = async (file: File) => {
-    const reader = new FileReader()
-    return new Promise<string>((resolve, reject) => {
-      reader.onload = async (event) => {
-        if (event.target) {
-          try {
-            const typedArray = new Uint8Array(event.target.result as ArrayBuffer)
-            const pdf = await pdfjsLib.getDocument(typedArray).promise
-            let fullText = ''
-            for (let i = 1; i <= pdf.numPages; i++) {
-              setStatusMessage(`Extracting text from page ${i} of ${pdf.numPages}`)
-              const page = await pdf.getPage(i)
-              const content = await page.getTextContent()
-              const pageText = content.items.map((item: any) => item.str).join(' ')
-              fullText += pageText + '\n'
-              setProgress((i / pdf.numPages) * 50) // First 50% for extraction
-            }
-            console.log('Extracted Text Length:', fullText.length)  // Log extracted text length
-            resolve(fullText)
-          } catch (error) {
-            console.error('Error extracting text from PDF:', error)
-            reject(new Error('Failed to extract text from PDF. Please try again.'))
-          }
-        }
-      }
-      reader.onerror = () => reject(new Error('Failed to read the PDF file. Please try again.'))
-      reader.readAsArrayBuffer(file)
-    })
+  const handleMetadata = (meta: any) => {
+    setMetadata(meta)
+  }
+  
+  const handlePDFContent = (content: string) => {
+    setPdfContent(content)
   }
 
-  const summarizeText = async (text: string) => {
-    try {
-      setStatusMessage('Summarizing extracted text')
-      console.log('Sending text to summarization API. Text length:', text.length)
-      const result = await hf.summarization({
-        model: 'facebook/bart-large-cnn',
-        inputs: text,
-        parameters: {
-          max_length: 150,
-          min_length: 30,
-        },
-      })
-      console.log('Summarization API response:', result)
-      return result.summary_text
-    } catch (error) {
-      console.error('Error during summarization:', error)
-      if (error instanceof Error) {
-        throw new Error(`Failed to summarize the text: ${error.message}`)
-      } else {
-        throw new Error('Failed to summarize the text. Please try again.')
-      }
-    }
-  }
+  const renderSettingsPanel = () => (
+    <motion.div
+      initial={{ opacity: 0, x: 300 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 300 }}
+      className="fixed right-0 top-0 h-full w-80 bg-white dark:bg-gray-800 shadow-2xl p-6 z-50"
+    >
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Summary Settings</h3>
+        <button
+          onClick={() => setShowSettings(false)}
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          <X size={24} />
+        </button>
+      </div>
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!file) return
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Summary Length
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {['short', 'medium', 'detailed'].map((length) => (
+              <button
+                key={length}
+                onClick={() => setSummarySettings(prev => ({ ...prev, length: length as any }))}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  summarySettings.length === length
+                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                {length.charAt(0).toUpperCase() + length.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
 
-    setIsProcessing(true)
-    setProgress(0)
-    setSummary('')
-    setError('')
-    setStatusMessage('Starting PDF processing')
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Tone
+          </label>
+          <div className="space-y-2">
+            {[
+              { value: 'academic', label: 'Academic', icon: BookOpen },
+              { value: 'simple', label: 'Simple', icon: FileText },
+              { value: 'creative', label: 'Creative', icon: Sparkles }
+            ].map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setSummarySettings(prev => ({ ...prev, tone: value as any }))}
+                className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors duration-200 ${
+                  summarySettings.tone === value
+                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                <Icon size={18} className="mr-2" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-    try {
-      const extractedText = await extractTextFromPdf(file)
-      if (extractedText) {
-        setProgress(50) // Extraction complete
-        setStatusMessage('Text extraction complete. Starting summarization...')
-        const summarizedText = await summarizeText(extractedText)
-        setSummary(summarizedText)
-        setProgress(100)
-        setStatusMessage('Summarization complete!')
-      }
-    } catch (error) {
-      console.error('Error processing PDF:', error)
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.')
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Format
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setSummarySettings(prev => ({ ...prev, format: 'bullets' }))}
+              className={`flex items-center justify-center px-4 py-2 rounded-lg transition-colors duration-200 ${
+                summarySettings.format === 'bullets'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <List size={18} className="mr-2" />
+              Bullets
+            </button>
+            <button
+              onClick={() => setSummarySettings(prev => ({ ...prev, format: 'paragraphs' }))}
+              className={`flex items-center justify-center px-4 py-2 rounded-lg transition-colors duration-200 ${
+                summarySettings.format === 'paragraphs'
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <AlignLeft size={18} className="mr-2" />
+              Paragraphs
+            </button>
+          </div>
+        </div>
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(summary)
-    // Optionally, show a notification that the text was copied
-  }
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Preserve Document Structure
+            </span>
+            <button
+              onClick={() => setSummarySettings(prev => ({ 
+                ...prev, 
+                preserveStructure: !prev.preserveStructure 
+              }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                summarySettings.preserveStructure
+                  ? 'bg-indigo-600'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  summarySettings.preserveStructure ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Extract Definitions
+            </span>
+            <button
+              onClick={() => setSummarySettings(prev => ({ 
+                ...prev, 
+                extractDefinitions: !prev.extractDefinitions 
+              }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                summarySettings.extractDefinitions
+                  ? 'bg-indigo-600'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  summarySettings.extractDefinitions ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Highlight Key Points
+          </span>
+          <button
+            onClick={() => setSummarySettings(prev => ({ 
+              ...prev, 
+              highlightKeyPoints: !prev.highlightKeyPoints 
+            }))}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+              summarySettings.highlightKeyPoints
+                ? 'bg-indigo-600'
+                : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                summarySettings.highlightKeyPoints ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md transition-all duration-300">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">PDF Summarizer</h2>
-      <form onSubmit={handleSubmit} className="mb-6">
-        <div 
-          className="flex items-center justify-center w-full"
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 max-w-[1600px] mx-auto"
         >
-          <label 
-            htmlFor="dropzone-file" 
-            className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-          >
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="w-10 h-10 mb-3 text-gray-400" />
-              <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">PDF (MAX. 10MB)</p>
-            </div>
-            <input 
-              id="dropzone-file" 
-              type="file" 
-              className="hidden" 
-              onChange={handleFileChange} 
-              accept=".pdf" 
-              ref={fileInputRef}
-            />
-          </label>
-        </div>
-        {file && (
-          <div className="mt-4 flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+        <div className="p-6 lg:p-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div className="flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-indigo-500" />
-              <span className="text-sm text-gray-500 dark:text-gray-300">{file.name}</span>
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-2 rounded-lg mr-3">
+                <Wand2 className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-grow">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                  AI PDF Summarizer
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Transform your documents into clear, concise summaries
+                </p>
+              </div>
             </div>
             <button
-              type="button"
-              onClick={() => setFile(null)}
-              className="text-red-500 hover:text-red-700 dark:hover:text-red-400"
+              onClick={() => setShowSettings(true)}
+              className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors duration-200 flex items-center gap-2"
             >
-              <X size={20} />
+              <Settings2 size={24} />
+              <span>Settings</span>
             </button>
           </div>
-        )}
-        {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            <span>{error}</span>
-          </div>
-        )}
-        <button
-          type="submit"
-          className="mt-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-colors duration-300"
-          disabled={!file || isProcessing}
-        >
-          {isProcessing ? 'Processing...' : 'Summarize PDF'}
-        </button>
-      </form>
-      {isProcessing && (
-        <div className="mb-6">
-          <div className="relative pt-1">
-            <div className="flex mb-2 items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-indigo-600 bg-indigo-200">
-                  Progress
-                </span>
+
+          {metadata && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-lg"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {metadata.title && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Title</p>
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {metadata.title}
+                    </p>
+                  </div>
+                )}
+                {metadata.author && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Author</p>
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {metadata.author}
+                    </p>
+                  </div>
+                )}
+                {metadata.pages && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Pages</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {metadata.pages}
+                    </p>
+                  </div>
+                )}
+                {metadata.keywords && metadata.keywords.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {metadata.keywords.slice(0, 3).map((keyword, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                      {metadata.keywords.length > 3 && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          +{metadata.keywords.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="text-right">
-                <span className="text-xs font-semibold inline-block text-indigo-600">
-                  {Math.round(progress)}%
-                </span>
-              </div>
-            </div>
-            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-indigo-200">
-              <motion.div 
-                style={{ width: `${progress}%` }} 
-                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5 }}
-              ></motion.div>
-            </div>
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{statusMessage}</p>
-        </div>
-      )}
-      <AnimatePresence>
-        {summary && (
+            </motion.div>
+          )}
+
+          {/* Info Box */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="mt-6 bg-gray-100 dark:bg-gray-700 p-6 rounded-lg"
+            className="mb-6 p-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-900/30 dark:via-purple-900/30 dark:to-pink-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800/30 backdrop-blur-sm"
           >
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Summary</h3>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">{summary}</p>
-            <button
-              onClick={copyToClipboard}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300 flex items-center"
-            >
-              <Copy size={20} className="mr-2" /> Copy to Clipboard
-            </button>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <FileSearch className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-grow">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                  Advanced AI-Powered PDF Analysis
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Transform lengthy documents into clear, actionable insights with our advanced AI summarization technology.
+              </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { icon: FileText, text: "Up to 10MB PDFs" },
+                    { icon: BookOpen, text: "50 Page Limit" },
+                    { icon: Sparkles, text: "Smart Context" },
+                    { icon: List, text: "Chunk Processing" }
+                  ].map(({ icon: Icon, text }, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-2 text-gray-600 dark:text-gray-400"
+                    >
+                      <Icon size={16} className="text-indigo-500" />
+                      <span className="text-sm">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </motion.div>
-        )}
+
+          {/* PDF Processor */}
+          <PDFProcessor 
+            onError={handleError}
+            onPDFContent={handlePDFContent}
+            onMetadata={handleMetadata}
+            mode="summarize"
+          />
+
+          {pdfContent && (
+            <div>
+              <div className="flex justify-end mb-4 space-x-2">
+                <button
+                  onClick={() => setViewMode(viewMode === 'split' ? 'single' : 'split')}
+                  className="px-3 py-1 text-sm bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                >
+                  {viewMode === 'split' ? 'Single View' : 'Split View'}
+                </button>
+              </div>
+
+              {viewMode === 'split' ? (
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                    <h3 className="text-lg font-semibold mb-2">Original Text</h3>
+                    <div className="prose dark:prose-invert max-w-none">
+                      {pdfContent.split('\n').map((paragraph, i) => (
+                        <p key={i}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                    {lastGeneratedSummary ? (
+                      <Summarizer text={pdfContent} settings={summarySettings} initialSummary={lastGeneratedSummary} />
+                    ) : (
+                      <Summarizer text={pdfContent} settings={summarySettings} onSummaryComplete={setLastGeneratedSummary} />
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 space-y-4"
+                >
+                  <Summarizer 
+                    text={pdfContent} 
+                    settings={summarySettings} 
+                    onSummaryComplete={setLastGeneratedSummary} 
+                    initialSummary={lastGeneratedSummary}
+                  />
+                </motion.div>
+              )}
+            </div>
+          )}
+
+          {/* Usage Tips */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+          >
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
+              Tips for Best Results
+            </h3>
+            <ul className="space-y-2 text-gray-600 dark:text-gray-300 text-sm">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                Ensure your PDF is text-based and not scanned images
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                For large documents, the summary will be generated in chunks to maintain quality
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                The summary focuses on key points while maintaining context and coherence
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                Complex technical documents may require multiple passes for best results
+              </li>
+            </ul>
+          </motion.div>
+        </div>
+      </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {showSettings && renderSettingsPanel()}
       </AnimatePresence>
     </div>
   )

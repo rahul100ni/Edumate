@@ -14,7 +14,7 @@ const destDir = join(__dirname, '../public');
 const files = [
   {
     source: 'pdfjs-dist/build/pdf.worker.js',
-    dest: 'pdf.worker.min.js',
+    dest: 'pdf.worker.js',
     required: true
   }
 ];
@@ -34,7 +34,9 @@ async function copyFiles() {
       try {
         await fs.access(sourcePath);
         await fs.copyFile(sourcePath, destPath);
-        console.log(`✓ Copied ${file.dest} to public directory`);
+        // Create minified version
+        await fs.copyFile(sourcePath, destPath.replace('.js', '.min.js'));
+        console.log(`✓ Copied ${file.dest} and minified version to public directory`);
       } catch (error) {
         if (file.required) {
           console.error(`❌ Error: Required file ${file.source} not found. Error: ${error.message}`);

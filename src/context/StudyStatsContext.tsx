@@ -105,18 +105,51 @@ export const StudyStatsProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }
 
   const getCurrentStreak = (): number => {
-    const dailyStats = getDailyStats(30)
     let streak = 0
-    const today = new Date().toISOString().split('T')[0]
+    // Get today's date in user's local timezone
+    const now = new Date()
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const today = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }))
+    const todayStr = today.toISOString().split('T')[0]
     
-    for (let i = 0; i < dailyStats.length; i++) {
-      const currentDate = dailyStats[i].date
-      const expectedDate = new Date()
-      expectedDate.setDate(new Date(today).getDate() - i)
+    // Get all sessions and group by date
+    const sessionsByDate = sessions.reduce((acc: { [key: string]: StudySession[] }, session) => {
+      // Convert session date to user's timezone
+      const sessionDate = new Date(session.date + 'T00:00:00').toLocaleString('en-US', { timeZone: userTimezone })
+      const sessionDateStr = new Date(sessionDate).toISOString().split('T')[0]
+      if (!acc[sessionDateStr]) {
+        acc[sessionDateStr] = []
+      }
+      acc[sessionDateStr].push(session)
+      return acc
+    }, {})
+
+    // Check if there's any completed session today
+    const hasCompletedToday = sessionsByDate[todayStr]?.some(session => 
+      session.type === 'work' && (
+        session.completed || session.duration >= 15 // Count sessions with at least 15 minutes
+      )
+    )
+
+    // Start counting streak
+    let currentDate = hasCompletedToday ? todayStr : 
+      new Date(today.setDate(today.getDate() - 1)).toISOString().split('T')[0]
+    
+    while (true) {
+      const expectedDate = new Date(currentDate + 'T00:00:00')
       const expectedDateStr = expectedDate.toISOString().split('T')[0]
       
-      if (currentDate === expectedDateStr && dailyStats[i].sessionsCompleted > 0) {
+      const hasCompletedSessions = sessionsByDate[expectedDateStr]?.some(session => 
+        session.type === 'work' && (
+          session.completed || session.duration >= 15 // Count sessions with at least 15 minutes
+        )
+      )
+
+      if (hasCompletedSessions) {
         streak++
+        // Move to previous day
+        expectedDate.setDate(expectedDate.getDate() - 1)
+        currentDate = expectedDate.toISOString().split('T')[0]
       } else {
         break
       }
@@ -126,9 +159,13 @@ export const StudyStatsProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }
 
   const getTodayStats = (): DailyStats => {
-    const today = new Date().toISOString().split('T')[0]
-    return getDailyStats(1).find(stat => stat.date === today) || {
-      date: today,
+    // Get today's date in user's local timezone
+    const now = new Date()
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const today = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }))
+    const todayStr = today.toISOString().split('T')[0]
+    return getDailyStats(1).find(stat => stat.date === todayStr) || {
+      date: todayStr,
       totalDuration: 0,
       sessionsCompleted: 0,
       totalSessions: 0

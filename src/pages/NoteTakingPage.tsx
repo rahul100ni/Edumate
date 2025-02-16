@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Save, Plus, Trash2, Search, Folder, Tag, ChevronRight, Bold, Italic, Underline, Download, X } from 'lucide-react'
 import { jsPDF } from "jspdf"
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface Note {
   id: number
@@ -12,6 +13,8 @@ interface Note {
 }
 
 const NoteTakingPage: React.FC = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [notes, setNotes] = useState<Note[]>(() => {
     const savedNotes = localStorage.getItem('notes')
     return savedNotes ? JSON.parse(savedNotes) : []
@@ -25,7 +28,90 @@ const NoteTakingPage: React.FC = () => {
   const [showTagInput, setShowTagInput] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [showSidebar, setShowSidebar] = useState(true)
+  const [showPDFImportNotification, setShowPDFImportNotification] = useState(false)
   const contentEditableRef = useRef<HTMLDivElement>(null)
+
+  const handlePDFSummaryImport = useCallback(() => {
+    const pendingNote = localStorage.getItem('pendingNote')
+    if (pendingNote) {
+      try {
+        const noteData = JSON.parse(pendingNote)
+        if (noteData.type === 'pdf_summary') {
+          // Create a folder if it doesn't exist
+          if (!folders.includes('PDF Summaries')) {
+            setFolders(prev => [...prev, 'PDF Summaries'])
+          }
+
+          // Create a new note with the PDF summary
+          const newNote: Note = {
+            id: Date.now(),
+            title: noteData.title || `PDF Summary - ${new Date().toLocaleDateString()}`,
+            content: noteData.content,
+            folder: 'PDF Summaries',
+            tags: ['pdf-summary'],
+            lastModified: new Date()
+          }
+
+          // Add key points as tags if available
+          if (noteData.metadata?.keyPoints) {
+            const keyPointTags = noteData.metadata.keyPoints
+              .map(point => point.substring(0, 30)) // Limit tag length
+              .slice(0, 5) // Limit number of tags
+            newNote.tags = [...newNote.tags, ...keyPointTags]
+          }
+
+          // Add definitions as tags if available
+          if (noteData.metadata?.definitions) {
+            const definitionTags = noteData.metadata.definitions
+              .map(def => def.term.substring(0, 30)) // Limit tag length
+              .slice(0, 5) // Limit number of tags
+            newNote.tags = [...newNote.tags, ...definitionTags]
+          }
+
+          // Format the content with a header section
+          const headerSection = `
+            <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Generated on ${new Date(noteData.metadata.generatedAt).toLocaleString()}
+              </p>
+              ${noteData.metadata.originalLength ? 
+                `<p class="text-sm text-gray-500 dark:text-gray-400">
+                  Original length: ${Math.round(noteData.metadata.originalLength / 1000)}k characters
+                </p>` : ''
+              }
+            </div>
+          `.trim();
+
+          newNote.content = headerSection + newNote.content;
+
+          setNotes(prev => [...prev, newNote])
+          setShowPDFImportNotification(true)
+          
+          // Clear the pending note
+          localStorage.removeItem('pendingNote')
+          
+          // Select the new note
+          setCurrentNote(newNote)
+          if (contentEditableRef.current) {
+            contentEditableRef.current.innerHTML = newNote.content
+          }
+
+          // Set active folder to PDF Summaries
+          setActiveFolder('PDF Summaries')
+        }
+      } catch (error) {
+        console.error('Error importing PDF summary:', error)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (location.search.includes('source=pdf-summary')) {
+      handlePDFSummaryImport()
+      // Clear the URL parameter
+      navigate('/note-taking', { replace: true })
+    }
+  }, [location, handlePDFSummaryImport, navigate])
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes))
@@ -126,6 +212,15 @@ const NoteTakingPage: React.FC = () => {
       const content = contentEditableRef.current?.innerHTML || ''
       const tempDiv = document.createElement('div')
       tempDiv.innerHTML = content
+      
+      // Remove metadata section if present
+      const metadataSection = tempDiv.querySelector('.mb-4.p-4.bg-gray-50, .mb-4.p-4.bg-gray-800')
+      if (metadataSection) {
+        const metadataText = metadataSection.textContent || ''
+        if (metadataText.includes('Generated on') || metadataText.includes('Original length')) {
+          metadataSection.remove()
+        }
+      }
 
       let yOffset = 30
       const lineHeight = 7
@@ -307,6 +402,34 @@ const NoteTakingPage: React.FC = () => {
         </div>
       )}
       <div className="flex-grow bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md overflow-y-auto">
+        {showPDFImportNotification && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                    PDF Summary imported successfully!
+                  </p>
+                </div>
+              </div>
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowPDFImportNotification(false)}
+                  className="inline-flex rounded-md bg-green-50 dark:bg-green-900/30 p-1.5 text-green-500 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800/50 focus:outline-none"
+                >
+                  <span className="sr-only">Dismiss</span>
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
           <input
             type="text"

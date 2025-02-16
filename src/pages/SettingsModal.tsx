@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
 
@@ -14,6 +14,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ closeSettings }) =
     longBreakDuration: '',
     sessionsBeforeLongBreak: ''
   })
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     // Initialize temp settings with current values
@@ -46,6 +47,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ closeSettings }) =
     if (value === '' || (/^\d+$/.test(value) && parseInt(value) > 0)) {
       setTempSettings(prev => ({ ...prev, [field]: value }))
     }
+  }
+
+  const previewSound = (sound: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    audioRef.current = new Audio(`/sounds/${sound}.mp3`)
+    audioRef.current.volume = settings.soundVolume
+    audioRef.current.play().catch(error => console.error("Error playing sound:", error))
   }
 
   return (
@@ -155,7 +166,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ closeSettings }) =
                 </label>
                 <select
                   value={settings.selectedSound}
-                  onChange={(e) => updateSettings({ selectedSound: e.target.value as 'bell' | 'chime' | 'gong' })}
+                  onChange={(e) => {
+                    const newSound = e.target.value as 'bell' | 'chime' | 'gong'
+                    updateSettings({ selectedSound: newSound })
+                    previewSound(newSound)
+                  }}
                   className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="bell">Bell</option>

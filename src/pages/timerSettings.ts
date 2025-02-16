@@ -19,7 +19,7 @@ export const defaultSettings: TimerSettings = {
   shortBreakDuration: 5 * 60,
   longBreakDuration: 15 * 60,
   sessionsBeforeLongBreak: 4,
-  autoStartBreaks: false,
+  autoStartBreaks: true,
   autoStartPomodoros: true,
   soundEnabled: true,
   soundVolume: 0.5,
@@ -27,5 +27,5 @@ export const defaultSettings: TimerSettings = {
   focusMode: false,
   backgroundMusic: false,
   showTimeInTab: true,
-  desktopNotifications: true,
+  desktopNotifications: false,
 }

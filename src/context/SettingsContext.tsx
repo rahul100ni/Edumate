@@ -58,8 +58,23 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<Settings>(() => {
-    const savedSettings = localStorage.getItem('appSettings')
-    return savedSettings ? { ...defaultSettings, ...JSON.parse(savedSettings) } : defaultSettings
+    try {
+      const savedSettings = localStorage.getItem('appSettings')
+      if (!savedSettings) return defaultSettings
+      
+      const parsedSettings = JSON.parse(savedSettings)
+      // Validate critical settings
+      if (typeof parsedSettings.workDuration !== 'number' || 
+          typeof parsedSettings.shortBreakDuration !== 'number' ||
+          typeof parsedSettings.longBreakDuration !== 'number') {
+        console.warn('Invalid settings detected, resetting to defaults')
+        return defaultSettings
+      }
+      return { ...defaultSettings, ...parsedSettings }
+    } catch (error) {
+      console.error('Failed to load settings:', error)
+      return defaultSettings
+    }
   })
 
   useEffect(() => {
